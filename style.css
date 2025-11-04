@@ -69,6 +69,13 @@ h1, h2, h3 {
     border: 1px solid var(--light-gray);
     transition: box-shadow 0.2s, border-color 0.2s;
     cursor: pointer;
+    word-wrap: break-word; /* Ensure long words wrap */
+}
+
+.lab label {
+    display: inline-block; /* Allow wrapping */
+    vertical-align: middle;
+    max-width: calc(100% - 25px); /* Prevent label from overflowing */
 }
 
 .lab:hover {
@@ -88,11 +95,9 @@ h1, h2, h3 {
 /* --- Time Grid --- */
 #schedule-container {
     display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    flex-direction: column; /* Mobile-first: vertical layout */
     gap: 8px;
     margin-top: 20px;
-    padding-bottom: 10px; /* For scrollbar */
 }
 
 .time-slot {
@@ -104,7 +109,15 @@ h1, h2, h3 {
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s;
     user-select: none;
-    flex: 0 0 80px; /* Fixed width for each slot */
+}
+
+/* Desktop layout: Switch to a grid */
+@media (min-width: 768px) {
+    #schedule-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 10px;
+    }
 }
 
 .time-slot:hover {
@@ -152,6 +165,16 @@ h1, h2, h3 {
     display: flex;
     padding: 15px;
     border-bottom: 1px solid var(--light-gray);
+}
+
+#itinerary-container li.busy {
+    background-color: #f8d7da; /* A light red for busy times */
+    color: #721c24;
+}
+
+#itinerary-container li.current {
+    background-color: #d4edda; /* A light green for the current event */
+    border-left: 5px solid #155724;
 }
 
 #itinerary-container li:nth-child(odd) {

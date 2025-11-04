@@ -53,19 +53,19 @@ function displayLabs() {
  */
 function createTimeGrid() {
     scheduleContainer.innerHTML = '';
-    for (let i = 9; i < 17; i++) { // 9am to 5pm
-        const hour = i.toString().padStart(2, '0');
-        const timeSlot1 = document.createElement('div');
-        timeSlot1.classList.add('time-slot');
-        timeSlot1.textContent = `${hour}:00`;
-        timeSlot1.dataset.time = `${hour}:00`;
-        scheduleContainer.appendChild(timeSlot1);
+    const startTime = 9 * 60; // 9:00 AM in minutes
+    const endTime = 16 * 60 + 30; // 4:30 PM in minutes
 
-        const timeSlot2 = document.createElement('div');
-        timeSlot2.classList.add('time-slot');
-        timeSlot2.textContent = `${hour}:30`;
-        timeSlot2.dataset.time = `${hour}:30`;
-        scheduleContainer.appendChild(timeSlot2);
+    for (let minutes = startTime; minutes <= endTime; minutes += 30) {
+        const h = Math.floor(minutes / 60).toString().padStart(2, '0');
+        const m = (minutes % 60).toString().padStart(2, '0');
+        const timeString = `${h}:${m}`;
+
+        const timeSlot = document.createElement('div');
+        timeSlot.classList.add('time-slot');
+        timeSlot.textContent = timeString;
+        timeSlot.dataset.time = timeString;
+        scheduleContainer.appendChild(timeSlot);
     }
 }
 
@@ -76,6 +76,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     await fetchLabs();
     displayLabs();
     createTimeGrid();
+
+    // Check for a cached schedule on page load
+    const cachedSchedule = localStorage.getItem('cachedSchedule');
+    const cachedAvailability = localStorage.getItem('cachedAvailability');
+    if (cachedSchedule && cachedAvailability) {
+        studentAvailability = JSON.parse(cachedAvailability);
+        displayItinerary(JSON.parse(cachedSchedule));
+        startHighlightTimer();
+    }
 });
 
 let isMouseDown = false;
@@ -205,8 +214,14 @@ function generateItinerary() {
         }
 
         if (schedule.length > 0) {
+            // Cache the successful schedule and the availability for context
+            localStorage.setItem('cachedSchedule', JSON.stringify(schedule));
+            localStorage.setItem('cachedAvailability', JSON.stringify(studentAvailability));
             displayItinerary(schedule);
         } else {
+            // Clear cache on failure
+            localStorage.removeItem('cachedSchedule');
+            localStorage.removeItem('cachedAvailability');
             itineraryContainer.innerHTML = '<p>A schedule could not be generated with the selected labs and availability.</p>';
         }
         showLoading(false);
@@ -350,22 +365,62 @@ function canScheduleWithDuration(labsInOrder, availabilitySet, duration) {
 
 function displayItinerary(schedule) {
     itineraryContainer.innerHTML = '<h3>Your Optimal Itinerary</h3>';
-    itineraryContainer.innerHTML += '<p class="travel-note">A 5-minute travel time is automatically added between each visit.</p>';
     const list = document.createElement('ul');
 
-    schedule.forEach((item, index) => {
-        const listItem = document.createElement('li');
-        const duration = item.end - item.start;
-        listItem.innerHTML = `
-            <div class="time">${minutesToTime(item.start)} - ${minutesToTime(item.end)}</div>
-            <div class="details">
-                <strong>${item.lab.name}</strong> (${duration} mins)<br>
-                <small>${item.lab.location}</small>
-            </div>
-        `;
-        list.appendChild(listItem);
-    });
+    const availabilityMinutes = studentAvailability.map(timeToMinutes);
+    const dayStart = Math.min(...availabilityMinutes);
+    const dayEnd = Math.max(...availabilityMinutes) + 30;
 
+    let currentTime = dayStart;
+    let scheduleIndex = 0;
+
+    while (currentTime < dayEnd) {
+        const nextVisit = schedule[scheduleIndex];
+
+        if (nextVisit && currentTime >= nextVisit.start) {
+            const listItem = document.createElement('li');
+            listItem.dataset.start = nextVisit.start;
+            listItem.dataset.end = nextVisit.end;
+            const duration = nextVisit.end - nextVisit.start;
+            listItem.innerHTML = `
+                <div class="time">${minutesToTime(nextVisit.start)} - ${minutesToTime(nextVisit.end)}</div>
+                <div class="details">
+                    <strong>${nextVisit.lab.name}</strong> (${duration} mins)<br>
+                    <small>${nextVisit.lab.location}</small>
+                </div>
+            `;
+            list.appendChild(listItem);
+            currentTime = nextVisit.end;
+
+            if (scheduleIndex < schedule.length - 1) {
+                const travelItem = document.createElement('li');
+                travelItem.classList.add('busy');
+                travelItem.dataset.start = currentTime;
+                travelItem.dataset.end = currentTime + 5;
+                travelItem.innerHTML = `
+                    <div class="time">${minutesToTime(currentTime)} - ${minutesToTime(currentTime + 5)}</div>
+                    <div class="details"><em>Travel Time</em></div>
+                `;
+                list.appendChild(travelItem);
+                currentTime += 5;
+            }
+            scheduleIndex++;
+        } else {
+            const busyEndTime = nextVisit ? nextVisit.start : dayEnd;
+            if (currentTime < busyEndTime) {
+                const busyItem = document.createElement('li');
+                busyItem.classList.add('busy');
+                busyItem.dataset.start = currentTime;
+                busyItem.dataset.end = busyEndTime;
+                busyItem.innerHTML = `
+                    <div class="time">${minutesToTime(currentTime)} - ${minutesToTime(busyEndTime)}</div>
+                    <div class="details"><em>Unavailable / Free</em></div>
+                `;
+                list.appendChild(busyItem);
+            }
+            currentTime = busyEndTime;
+        }
+    }
     itineraryContainer.appendChild(list);
 
     const scheduledLabs = schedule.map(item => item.lab.name);
@@ -382,6 +437,36 @@ function displayItinerary(schedule) {
         `;
         itineraryContainer.appendChild(unscheduledDiv);
     }
+}
+
+function startHighlightTimer() {
+    setInterval(highlightCurrentEvent, 60 * 1000); // Check every minute
+    highlightCurrentEvent(); // Run once immediately
+}
+
+function highlightCurrentEvent() {
+    const now = new Date();
+    // Use a specific locale that doesn't guarantee a particular timezone, but is necessary for the API.
+    // The key is the timeZone identifier.
+    const winnipegTimeStr = now.toLocaleString('en-US', { timeZone: 'America/Winnipeg' });
+    const winnipegTime = new Date(winnipegTimeStr);
+
+    if (winnipegTime.getDay() !== 5 || winnipegTime.getDate() !== 7 || winnipegTime.getMonth() !== 10) { // Friday, Nov 7th
+        return;
+    }
+
+    const currentMinutes = winnipegTime.getHours() * 60 + winnipegTime.getMinutes();
+
+    const allItems = document.querySelectorAll('#itinerary-container li');
+    allItems.forEach(item => {
+        item.classList.remove('current');
+        const start = parseInt(item.dataset.start, 10);
+        const end = parseInt(item.dataset.end, 10);
+        if (currentMinutes >= start && currentMinutes < end) {
+            item.classList.add('current');
+            item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    });
 }
 
 
