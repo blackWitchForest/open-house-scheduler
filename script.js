@@ -394,7 +394,7 @@ function displayItinerary(schedule) {
 
             if (scheduleIndex < schedule.length - 1) {
                 const travelItem = document.createElement('li');
-                travelItem.classList.add('busy');
+                travelItem.classList.add('travel');
                 travelItem.dataset.start = currentTime;
                 travelItem.dataset.end = currentTime + 5;
                 travelItem.innerHTML = `

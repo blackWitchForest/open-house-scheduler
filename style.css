@@ -172,6 +172,11 @@ h1, h2, h3 {
     color: #721c24;
 }
 
+#itinerary-container li.travel {
+    background-color: #fff3cd; /* A light yellow for travel times */
+    color: #856404;
+}
+
 #itinerary-container li.current {
     background-color: #d4edda; /* A light green for the current event */
     border-left: 5px solid #155724;
