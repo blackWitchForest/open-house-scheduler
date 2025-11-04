@@ -1,36 +1,167 @@
 [
   {
-    "name": "AI Lab",
-    "presenter": "Dr. Smith",
-    "location": "E1-101",
+    "name": "3D Computer Vision for Robotics",
+    "presenter": "Chengzhou",
+    "location": "E2-495",
     "available": [
-      { "start": "9:00", "end": "11:00" },
+      { "start": "9:30", "end": "16:00" }
+    ]
+  },
+  {
+    "name": "Autonomous Agents",
+    "presenter": "Anderson",
+    "location": "E2-504",
+    "available": [
+      { "start": "9:30", "end": "10:00" },
+      { "start": "11:30", "end": "12:30" }
+    ]
+  },
+  {
+    "name": "Bioinformatics",
+    "presenter": "Tremblay-Savard",
+    "location": "E2-556",
+    "available": [
+      { "start": "13:30", "end": "16:30" }
+    ]
+  },
+  {
+    "name": "Building Games from Scratch",
+    "presenter": "Zapp",
+    "location": "E2-409",
+    "available": [
+      { "start": "10:00", "end": "12:00" },
+      { "start": "14:00", "end": "15:00" }
+    ]
+  },
+  {
+    "name": "CORE AI lab",
+    "presenter": "Salehkalaibar, Henry, Mohammed",
+    "location": "E2-510",
+    "available": [
+      { "start": "12:00", "end": "16:00" }
+    ]
+  },
+  {
+    "name": "Computational Finance",
+    "presenter": "Thulasiram",
+    "location": "E2-526",
+    "available": [
+      { "start": "13:30", "end": "16:30" }
+    ]
+  },
+  {
+    "name": "Computational Linguistics",
+    "presenter": "T. Miller",
+    "location": "E2-478",
+    "available": [
+      { "start": "09:00", "end": "16:30" }
+    ]
+  },
+  {
+    "name": "Data Science, Databases, Data Mining",
+    "presenter": "Leung",
+    "location": "E2-520",
+    "available": [
+      { "start": "14:00", "end": "16:00" }
+    ]
+  },
+  {
+    "name": "High-performance networking for large-scale Al workloads",
+    "presenter": "Sadrhaghighi",
+    "location": "E2-495",
+    "available": [
+      { "start": "14:00", "end": "16:00" }
+    ]
+  },
+  {
+    "name": "Human-Computer Interaction",
+    "presenter": "Bunt, Elmimouni, Gerhard, Latulipe, Young, Rea",
+    "location": "E2-534/560/568",
+    "available": [
+      { "start": "9:30", "end": "16:00" }
+    ]
+  },
+  {
+    "name": "Linux, Terminals, Tools, and Tiny Computers",
+    "presenter": "Bristow",
+    "location": "E2-418",
+    "available": [
+      { "start": "12:30", "end": "16:30" }
+    ]
+  },
+  {
+    "name": "Software Management, Maintenance, and Reliability (Mamba)",
+    "presenter": "Wang",
+    "location": "E2-590",
+    "available": [
+      { "start": "13:00", "end": "16:00" }
+    ]
+  },
+  {
+    "name": "Reliable and Robust Security in the New Era of Al",
+    "presenter": "Tabiban",
+    "location": "E2-530",
+    "available": [
+      { "start": "11:00", "end": "13:00" }
+    ]
+  },
+  {
+    "name": "Server Room Tour",
+    "presenter": "Durston",
+    "location": "E2-593",
+    "available": [
+      { "start": "10:00", "end": "12:00" },
       { "start": "13:00", "end": "15:00" }
     ]
   },
   {
-    "name": "Robotics Lab",
-    "presenter": "Dr. Jones",
-    "location": "E1-102",
+    "name": "Software Quality and Maintenance",
+    "presenter": "Chowdhury",
+    "location": "E2-590",
     "available": [
       { "start": "10:00", "end": "12:00" },
-      { "start": "14:00", "end": "16:00" }
+      { "start": "14:00", "end": "15:00" }
     ]
   },
-    {
-    "name": "HCI Lab",
-    "presenter": "Dr. Williams",
-    "location": "E1-103",
+  {
+    "name": "Three-way data analytics",
+    "presenter": "Hu",
+    "location": "E2-495",
     "available": [
-        { "start": "9:00", "end": "12:00" }
+      { "start": "10:00", "end": "12:00" },
+      { "start": "13:00", "end": "15:00" }
     ]
-    },
-    {
-    "name": "Systems Lab",
-    "presenter": "Dr. Brown",
-    "location": "E1-104",
+  },
+  {
+    "name": "Ethics and Professional Practice",
+    "presenter": "Dubois, Penner",
+    "location": "E2-461",
     "available": [
-        { "start": "13:00", "end": "17:00" }
+      { "start": "10:00", "end": "16:00" }
     ]
-    }
+  },
+  {
+    "name": "Geometric, Approximation and Distributed Algorithms",
+    "presenter": "Durocher, Li, A.Miller, Zhu",
+    "location": "E2-553",
+    "available": [
+      { "start": "15:00", "end": "16:00" }
+    ]
+  },
+  {
+    "name": "Undergrad Computer Graphics",
+    "presenter": "Braico",
+    "location": "E2-410",
+    "available": [
+      { "start": "9:00", "end": "14:30" }
+    ]
+  },
+  {
+    "name": "Visualizing Mobile Health",
+    "presenter": "Mansoor",
+    "location": "E2-495",
+    "available": [
+      { "start": "9:30", "end": "16:00" }
+    ]
+  }
 ]

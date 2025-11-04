@@ -141,7 +141,6 @@ generateScheduleBtn.addEventListener('click', () => {
 // --- Core Scheduling Logic ---
 
 function generateItinerary() {
-    // Convert student's time slots (e.g., "09:00", "09:30") into a set of available 1-minute intervals for efficient lookup.
     const availabilitySet = new Set();
     studentAvailability.forEach(slot => {
         const start = timeToMinutes(slot);
@@ -155,83 +154,120 @@ function generateItinerary() {
         return;
     }
 
-    let bestSchedule = null;
+    // --- Phase 1: Greedy Schedule Construction ---
+    let schedule = buildGreedySchedule(selectedLabs, availabilitySet);
 
-    // Start by trying to schedule all selected labs, then n-1, n-2, etc.
-    for (let numToSchedule = selectedLabs.length; numToSchedule > 0; numToSchedule--) {
-        const labCombinations = getCombinations(selectedLabs, numToSchedule);
-
-        for (const combination of labCombinations) {
-            const schedule = findBestScheduleForCombination(combination, availabilitySet);
-            if (schedule) {
-                // Since we're iterating from highest to lowest number of labs,
-                // the first valid schedule we find is the best one.
-                bestSchedule = schedule;
-                break;
-            }
-        }
-        if (bestSchedule) break;
+    // --- Phase 2: Duration Optimization ---
+    if (schedule.length > 0) {
+        schedule = optimizeScheduleDuration(schedule, availabilitySet);
     }
 
-    if (bestSchedule) {
-        displayItinerary(bestSchedule);
+    if (schedule.length > 0) {
+        displayItinerary(schedule);
     } else {
         itineraryContainer.innerHTML = '<p>A schedule could not be generated with the selected labs and availability.</p>';
     }
 }
 
-function findBestScheduleForCombination(labsToSchedule, availabilitySet) {
-    const permutations = permute(labsToSchedule);
-    let bestSchedule = null;
-    let maxDuration = 0;
+function buildGreedySchedule(labsToSchedule, availabilitySet) {
+    const schedule = [];
+    let remainingLabs = [...labsToSchedule];
+    const firstAvailableMinute = Math.min(...availabilitySet);
+    let currentTime = firstAvailableMinute;
 
-    for (const permutation of permutations) {
-        // Binary search for the optimal visit duration for this permutation
-        let low = 10; // Minimum 10-minute visit
-        let high = availabilitySet.size;
-        let bestScheduleForPerm = null;
+    while (currentTime < Math.max(...availabilitySet) && remainingLabs.length > 0) {
+        let bestLab = null;
+        let bestLabEndTime = Infinity;
 
-        while (low <= high) {
-            const midDuration = Math.floor((low + high) / 2);
-            if (midDuration === 0) break;
-
-            const result = canScheduleWithDuration(permutation, availabilitySet, midDuration);
-
-            if (result.isPossible) {
-                bestScheduleForPerm = result.schedule;
-                low = midDuration + 1; // Try for a longer duration
-            } else {
-                high = midDuration - 1; // Duration is too long
+        // Find the next best lab to visit
+        for (const lab of remainingLabs) {
+            const earliestVisit = findEarliestVisit(lab, currentTime, availabilitySet);
+            if (earliestVisit && earliestVisit.end < bestLabEndTime) {
+                bestLab = lab;
+                bestLabEndTime = earliestVisit.end;
             }
         }
 
-        if (bestScheduleForPerm) {
-            const currentDuration = bestScheduleForPerm[0].end - bestScheduleForPerm[0].start;
-            if (currentDuration > maxDuration) {
-                maxDuration = currentDuration;
-                bestSchedule = bestScheduleForPerm;
-            }
+        if (bestLab) {
+            const visit = findEarliestVisit(bestLab, currentTime, availabilitySet);
+            schedule.push({ lab: bestLab, start: visit.start, end: visit.end });
+            currentTime = visit.end + 5; // 5 mins travel
+            remainingLabs = remainingLabs.filter(lab => lab !== bestLab);
+        } else {
+            // No more labs can be scheduled, break the loop
+            break;
         }
     }
+
+    return schedule;
+}
+
+function findEarliestVisit(lab, startTime, availabilitySet) {
+    const MIN_VISIT_DURATION = 10;
+
+    for (const slot of lab.available) {
+        const labStart = timeToMinutes(slot.start);
+        const labEnd = timeToMinutes(slot.end);
+
+        let potentialStartTime = Math.max(startTime, labStart);
+
+        while (potentialStartTime + MIN_VISIT_DURATION <= labEnd) {
+            const potentialEndTime = potentialStartTime + MIN_VISIT_DURATION;
+
+            let isStudentAvailable = true;
+            for (let i = potentialStartTime; i < potentialEndTime; i++) {
+                if (!availabilitySet.has(i)) {
+                    isStudentAvailable = false;
+                    break;
+                }
+            }
+
+            if (isStudentAvailable) {
+                return { start: potentialStartTime, end: potentialEndTime };
+            }
+            potentialStartTime++;
+        }
+    }
+    return null;
+}
+
+
+function optimizeScheduleDuration(schedule, availabilitySet) {
+    // Binary search for the optimal visit duration
+    let low = 10; // min duration
+    let high = availabilitySet.size;
+    let bestSchedule = schedule;
+
+    while (low <= high) {
+        const midDuration = Math.floor((low + high) / 2);
+        const result = canScheduleWithDuration(schedule.map(item => item.lab), availabilitySet, midDuration);
+
+        if (result.isPossible) {
+            bestSchedule = result.schedule;
+            low = midDuration + 1;
+        } else {
+            high = midDuration - 1;
+        }
+    }
+
     return bestSchedule;
 }
 
-function canScheduleWithDuration(permutation, availabilitySet, duration) {
+function canScheduleWithDuration(labsInOrder, availabilitySet, duration) {
     const schedule = [];
     const firstAvailableMinute = Math.min(...availabilitySet);
     let currentTime = firstAvailableMinute;
 
-    for (const lab of permutation) {
+    for (const lab of labsInOrder) {
         let visitScheduled = false;
-
-        // Find the earliest possible start time for this lab visit
         let potentialStartTime = currentTime;
-        while (true) {
-            const visitEndTime = potentialStartTime + duration;
 
-            // Check if student is available during this time slot
+        while (true) {
+            const potentialEndTime = potentialStartTime + duration;
+
+            // Check student availability
             let isStudentAvailable = true;
-            for (let i = potentialStartTime; i < visitEndTime; i++) {
+            for (let i = potentialStartTime; i < potentialEndTime; i++) {
                 if (!availabilitySet.has(i)) {
                     isStudentAvailable = false;
                     break;
@@ -239,25 +275,21 @@ function canScheduleWithDuration(permutation, availabilitySet, duration) {
             }
 
             if (!isStudentAvailable) {
-                 // Slide to the next available minute and try again
-                 potentialStartTime++;
-                 if (potentialStartTime > Math.max(...availabilitySet)) break; // No more time left
-                 continue;
+                potentialStartTime++;
+                if (potentialStartTime > Math.max(...availabilitySet)) break;
+                continue;
             }
 
-
-            // Check if the lab is open during this time slot
-            const isLabOpen = lab.available.some(slot => {
-                const labStart = timeToMinutes(slot.start);
-                const labEnd = timeToMinutes(slot.end);
-                return potentialStartTime >= labStart && visitEndTime <= labEnd;
-            });
+            // Check lab availability
+            const isLabOpen = lab.available.some(slot =>
+                potentialStartTime >= timeToMinutes(slot.start) && potentialEndTime <= timeToMinutes(slot.end)
+            );
 
             if (isLabOpen) {
-                schedule.push({ lab, start: potentialStartTime, end: visitEndTime });
-                currentTime = visitEndTime + 5; // Add 5-minute travel time
+                schedule.push({ lab, start: potentialStartTime, end: potentialEndTime });
+                currentTime = potentialEndTime + 5; // travel time
                 visitScheduled = true;
-                break; // Move to the next lab
+                break;
             }
 
             potentialStartTime++;
@@ -265,7 +297,7 @@ function canScheduleWithDuration(permutation, availabilitySet, duration) {
         }
 
         if (!visitScheduled) {
-            return { isPossible: false }; // Cannot schedule this lab, so the permutation fails
+            return { isPossible: false };
         }
     }
     return { isPossible: true, schedule };
@@ -276,13 +308,13 @@ function displayItinerary(schedule) {
     itineraryContainer.innerHTML = '<h3>Your Optimal Itinerary</h3>';
     const list = document.createElement('ul');
 
-    schedule.forEach(item => {
+    schedule.forEach((item, index) => {
         const listItem = document.createElement('li');
         const duration = item.end - item.start;
         listItem.textContent = `${minutesToTime(item.start)} - ${minutesToTime(item.end)}: Visit ${item.lab.name} (${duration} mins)`;
         list.appendChild(listItem);
 
-        if (schedule.indexOf(item) < schedule.length - 1) {
+        if (index < schedule.length - 1) {
             const travelItem = document.createElement('li');
             travelItem.style.fontStyle = 'italic';
             travelItem.textContent = `${minutesToTime(item.end)} - ${minutesToTime(item.end + 5)}: Travel time (5 mins)`;
@@ -311,23 +343,6 @@ function displayItinerary(schedule) {
 
 // --- Utility Functions ---
 
-function getCombinations(array, size) {
-    const combinations = [];
-    function helper(start, combination) {
-        if (combination.length === size) {
-            combinations.push([...combination]);
-            return;
-        }
-        for (let i = start; i < array.length; i++) {
-            combination.push(array[i]);
-            helper(i + 1, combination);
-            combination.pop();
-        }
-    }
-    helper(0, []);
-    return combinations;
-}
-
 function timeToMinutes(time) {
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + minutes;
@@ -337,21 +352,4 @@ function minutesToTime(minutes) {
     const h = Math.floor(minutes / 60).toString().padStart(2, '0');
     const m = (minutes % 60).toString().padStart(2, '0');
     return `${h}:${m}`;
-}
-
-function permute(arr) {
-    const result = [];
-    const helper = (currentPerm, remaining) => {
-        if (remaining.length === 0) {
-            result.push(currentPerm);
-            return;
-        }
-        for (let i = 0; i < remaining.length; i++) {
-            const nextPerm = currentPerm.concat(remaining[i]);
-            const nextRemaining = remaining.slice(0, i).concat(remaining.slice(i + 1));
-            helper(nextPerm, nextRemaining);
-        }
-    };
-    helper([], arr);
-    return result;
 }
