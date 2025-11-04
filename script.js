@@ -10,6 +10,7 @@ const scheduleContainer = document.getElementById('schedule-container');
 const generateScheduleBtn = document.getElementById('generate-schedule');
 const itineraryContainer = document.getElementById('itinerary-container');
 const notificationContainer = document.getElementById('notification-container');
+const selectAllBtn = document.getElementById('select-all-btn');
 
 
 // --- Functions ---
@@ -38,6 +39,11 @@ function displayLabs() {
             <input type="checkbox" id="lab-${lab.name}" name="lab" value="${lab.name}">
             <label for="lab-${lab.name}">${lab.name} (${lab.presenter}) - ${lab.location}</label>
         `;
+        labDiv.addEventListener('click', () => {
+            const checkbox = labDiv.querySelector('input');
+            checkbox.checked = !checkbox.checked;
+            labDiv.classList.toggle('selected', checkbox.checked);
+        });
         labsContainer.appendChild(labDiv);
     });
 }
@@ -73,40 +79,62 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 let isMouseDown = false;
-let selectionMode = 'add'; // 'add' or 'remove'
+let selectionMode = 'add';
+let startSlot = null;
 
 scheduleContainer.addEventListener('mousedown', (event) => {
     if (event.target.classList.contains('time-slot')) {
-        event.preventDefault(); // Prevent text selection
+        event.preventDefault();
         isMouseDown = true;
-        const slot = event.target;
-
-        // Determine if we're adding or removing slots
-        selectionMode = slot.classList.contains('selected') ? 'remove' : 'add';
-
-        // Toggle the first slot
-        slot.classList.toggle('selected');
+        startSlot = event.target;
+        selectionMode = !startSlot.classList.contains('selected') ? 'add' : 'remove';
+        toggleSlot(startSlot);
     }
 });
 
 scheduleContainer.addEventListener('mouseover', (event) => {
     if (isMouseDown && event.target.classList.contains('time-slot')) {
-        const slot = event.target;
-        if (selectionMode === 'add') {
-            slot.classList.add('selected');
-        } else {
-            slot.classList.remove('selected');
+        if (!startSlot) return; // Should not happen, but as a safeguard.
+        const allSlots = Array.from(document.querySelectorAll('.time-slot'));
+        const startIndex = allSlots.indexOf(startSlot);
+        const currentIndex = allSlots.indexOf(event.target);
+
+        // Clear previous selections in this drag instance to handle moving back and forth
+        allSlots.forEach(slot => {
+            if (slot !== startSlot) slot.classList.remove('selected-drag-active');
+        });
+
+        const min = Math.min(startIndex, currentIndex);
+        const max = Math.max(startIndex, currentIndex);
+
+        for(let i = min; i <= max; i++) {
+            allSlots[i].classList.add('selected-drag-active');
         }
     }
 });
 
-// Add mouseup to the whole window to catch drags that end outside the container
 window.addEventListener('mouseup', () => {
     if (isMouseDown) {
         isMouseDown = false;
+        startSlot = null;
+
+        document.querySelectorAll('.time-slot.selected-drag-active').forEach(slot => {
+            if(selectionMode === 'add') slot.classList.add('selected');
+            else slot.classList.remove('selected');
+            slot.classList.remove('selected-drag-active');
+        });
+
         updateAvailability();
     }
 });
+
+function toggleSlot(slot) {
+    if (selectionMode === 'add') {
+        slot.classList.add('selected');
+    } else {
+        slot.classList.remove('selected');
+    }
+}
 
 function updateAvailability() {
     studentAvailability = [];
@@ -116,6 +144,15 @@ function updateAvailability() {
     });
     studentAvailability.sort();
 }
+
+selectAllBtn.addEventListener('click', () => {
+    const checkboxes = document.querySelectorAll('input[name="lab"]');
+    const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = !allChecked;
+        checkbox.parentElement.classList.toggle('selected', checkbox.checked);
+    });
+});
 
 generateScheduleBtn.addEventListener('click', () => {
     selectedLabs = [];
@@ -313,20 +350,20 @@ function canScheduleWithDuration(labsInOrder, availabilitySet, duration) {
 
 function displayItinerary(schedule) {
     itineraryContainer.innerHTML = '<h3>Your Optimal Itinerary</h3>';
+    itineraryContainer.innerHTML += '<p class="travel-note">A 5-minute travel time is automatically added between each visit.</p>';
     const list = document.createElement('ul');
 
     schedule.forEach((item, index) => {
         const listItem = document.createElement('li');
         const duration = item.end - item.start;
-        listItem.textContent = `${minutesToTime(item.start)} - ${minutesToTime(item.end)}: Visit ${item.lab.name} (${duration} mins)`;
+        listItem.innerHTML = `
+            <div class="time">${minutesToTime(item.start)} - ${minutesToTime(item.end)}</div>
+            <div class="details">
+                <strong>${item.lab.name}</strong> (${duration} mins)<br>
+                <small>${item.lab.location}</small>
+            </div>
+        `;
         list.appendChild(listItem);
-
-        if (index < schedule.length - 1) {
-            const travelItem = document.createElement('li');
-            travelItem.style.fontStyle = 'italic';
-            travelItem.textContent = `${minutesToTime(item.end)} - ${minutesToTime(item.end + 5)}: Travel time (5 mins)`;
-            list.appendChild(travelItem);
-        }
     });
 
     itineraryContainer.appendChild(list);
