@@ -1,0 +1,36 @@
+body {
+    font-family: sans-serif;
+    display: flex;
+    justify-content: center;
+}
+
+#app {
+    display: flex;
+    gap: 20px;
+}
+
+#left-panel, #right-panel {
+    border: 1px solid #ccc;
+    padding: 20px;
+}
+
+#labs-container .lab {
+    margin-bottom: 10px;
+}
+
+#schedule-container {
+    display: grid;
+    grid-template-columns: repeat(2, 50px); /* 9am to 5pm in 30-min slots */
+    gap: 5px;
+}
+
+.time-slot {
+    border: 1px solid #ccc;
+    padding: 10px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.time-slot.selected {
+    background-color: lightblue;
+}

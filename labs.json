@@ -1,0 +1,36 @@
+[
+  {
+    "name": "AI Lab",
+    "presenter": "Dr. Smith",
+    "location": "E1-101",
+    "available": [
+      { "start": "9:00", "end": "11:00" },
+      { "start": "13:00", "end": "15:00" }
+    ]
+  },
+  {
+    "name": "Robotics Lab",
+    "presenter": "Dr. Jones",
+    "location": "E1-102",
+    "available": [
+      { "start": "10:00", "end": "12:00" },
+      { "start": "14:00", "end": "16:00" }
+    ]
+  },
+    {
+    "name": "HCI Lab",
+    "presenter": "Dr. Williams",
+    "location": "E1-103",
+    "available": [
+        { "start": "9:00", "end": "12:00" }
+    ]
+    },
+    {
+    "name": "Systems Lab",
+    "presenter": "Dr. Brown",
+    "location": "E1-104",
+    "available": [
+        { "start": "13:00", "end": "17:00" }
+    ]
+    }
+]
