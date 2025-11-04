@@ -7,19 +7,34 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>UofM CS Doors Open Scheduler</h1>
+    <div class="container">
+        <h1>UofM CS Doors Open Scheduler</h1>
 
-    <div id="app">
-        <div id="left-panel">
-            <h2>Select Labs</h2>
+        <div id="notification-container"></div>
+
+        <div class="step">
+            <h2>Step 1: Select Labs</h2>
+            <p>Choose the labs and research groups you're interested in visiting.</p>
             <div id="labs-container"></div>
         </div>
-        <div id="right-panel">
-            <h2>Your Availability</h2>
+
+        <div class="step">
+            <h2>Step 2: Set Your Availability</h2>
+            <p>Click and drag on the time grid below to mark the times you are free.</p>
             <div id="schedule-container"></div>
+        </div>
+
+        <div class="step">
+            <h2>Step 3: Generate Your Schedule</h2>
+            <p>Click the button below to create your personalized itinerary.</p>
             <button id="generate-schedule">Generate Schedule</button>
-            <h2>Your Itinerary</h2>
-            <div id="itinerary-container"></div>
+        </div>
+
+        <div class="step" id="itinerary-step">
+            <div id="itinerary-container">
+                <h2>Your Itinerary</h2>
+                <p>Your generated schedule will appear here.</p>
+            </div>
         </div>
     </div>
 

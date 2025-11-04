@@ -9,6 +9,7 @@ const labsContainer = document.getElementById('labs-container');
 const scheduleContainer = document.getElementById('schedule-container');
 const generateScheduleBtn = document.getElementById('generate-schedule');
 const itineraryContainer = document.getElementById('itinerary-container');
+const notificationContainer = document.getElementById('notification-container');
 
 
 // --- Functions ---
@@ -125,12 +126,12 @@ generateScheduleBtn.addEventListener('click', () => {
     });
 
     if (selectedLabs.length === 0) {
-        alert('Please select at least one lab to visit.');
+        showNotification('Please select at least one lab to visit.', 'error');
         return;
     }
 
     if (studentAvailability.length === 0) {
-        alert('Please select your availability.');
+        showNotification('Please select your availability.', 'error');
         return;
     }
 
@@ -141,32 +142,38 @@ generateScheduleBtn.addEventListener('click', () => {
 // --- Core Scheduling Logic ---
 
 function generateItinerary() {
-    const availabilitySet = new Set();
-    studentAvailability.forEach(slot => {
-        const start = timeToMinutes(slot);
-        for (let i = 0; i < 30; i++) {
-            availabilitySet.add(start + i);
+    showLoading(true);
+    // Use a short timeout to allow the loading indicator to render before the calculation starts
+    setTimeout(() => {
+        const availabilitySet = new Set();
+        studentAvailability.forEach(slot => {
+            const start = timeToMinutes(slot);
+            for (let i = 0; i < 30; i++) {
+                availabilitySet.add(start + i);
+            }
+        });
+
+        if (availabilitySet.size === 0) {
+            itineraryContainer.innerHTML = '<p>Please select your availability.</p>';
+            showLoading(false);
+            return;
         }
-    });
 
-    if (availabilitySet.size === 0) {
-        itineraryContainer.innerHTML = '<p>Please select your availability.</p>';
-        return;
-    }
+        // --- Phase 1: Greedy Schedule Construction ---
+        let schedule = buildGreedySchedule(selectedLabs, availabilitySet);
 
-    // --- Phase 1: Greedy Schedule Construction ---
-    let schedule = buildGreedySchedule(selectedLabs, availabilitySet);
+        // --- Phase 2: Duration Optimization ---
+        if (schedule.length > 0) {
+            schedule = optimizeScheduleDuration(schedule, availabilitySet);
+        }
 
-    // --- Phase 2: Duration Optimization ---
-    if (schedule.length > 0) {
-        schedule = optimizeScheduleDuration(schedule, availabilitySet);
-    }
-
-    if (schedule.length > 0) {
-        displayItinerary(schedule);
-    } else {
-        itineraryContainer.innerHTML = '<p>A schedule could not be generated with the selected labs and availability.</p>';
-    }
+        if (schedule.length > 0) {
+            displayItinerary(schedule);
+        } else {
+            itineraryContainer.innerHTML = '<p>A schedule could not be generated with the selected labs and availability.</p>';
+        }
+        showLoading(false);
+    }, 50);
 }
 
 function buildGreedySchedule(labsToSchedule, availabilitySet) {
@@ -352,4 +359,23 @@ function minutesToTime(minutes) {
     const h = Math.floor(minutes / 60).toString().padStart(2, '0');
     const m = (minutes % 60).toString().padStart(2, '0');
     return `${h}:${m}`;
+}
+
+function showNotification(message, type = 'info') {
+    notificationContainer.textContent = message;
+    notificationContainer.className = `notification ${type}`;
+    notificationContainer.style.display = 'block';
+    setTimeout(() => {
+        notificationContainer.style.display = 'none';
+    }, 3000);
+}
+
+function showLoading(isLoading) {
+    if (isLoading) {
+        generateScheduleBtn.disabled = true;
+        generateScheduleBtn.textContent = 'Generating...';
+    } else {
+        generateScheduleBtn.disabled = false;
+        generateScheduleBtn.textContent = 'Generate Schedule';
+    }
 }

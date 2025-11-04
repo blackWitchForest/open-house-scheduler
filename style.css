@@ -1,36 +1,166 @@
+/* --- Base Styles & Typography --- */
+:root {
+    --primary-color: #0056b3;
+    --primary-hover: #004494;
+    --background-color: #f4f7f6;
+    --card-background: #ffffff;
+    --text-color: #333;
+    --light-gray: #e9ecef;
+    --medium-gray: #ced4da;
+    --success-color: #28a745;
+    --error-color: #dc3545;
+}
+
 body {
-    font-family: sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 20px;
     display: flex;
     justify-content: center;
 }
 
-#app {
-    display: flex;
-    gap: 20px;
+.container {
+    width: 100%;
+    max-width: 900px;
 }
 
-#left-panel, #right-panel {
-    border: 1px solid #ccc;
-    padding: 20px;
+h1, h2, h3 {
+    text-align: center;
+    color: var(--primary-color);
 }
 
-#labs-container .lab {
-    margin-bottom: 10px;
+.step {
+    background: var(--card-background);
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
 }
 
+/* --- Lab Selection --- */
+#labs-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.lab {
+    background: #fdfdff;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid var(--light-gray);
+    transition: box-shadow 0.2s;
+}
+
+.lab:hover {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.lab input {
+    margin-right: 10px;
+}
+
+/* --- Time Grid --- */
 #schedule-container {
     display: grid;
-    grid-template-columns: repeat(2, 50px); /* 9am to 5pm in 30-min slots */
-    gap: 5px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-top: 20px;
 }
 
 .time-slot {
-    border: 1px solid #ccc;
-    padding: 10px;
+    background-color: var(--light-gray);
+    color: var(--text-color);
+    padding: 12px;
+    border-radius: 4px;
     text-align: center;
     cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+    user-select: none;
+}
+
+.time-slot:hover {
+    background-color: var(--medium-gray);
 }
 
 .time-slot.selected {
-    background-color: lightblue;
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: bold;
+}
+
+/* --- Button & Itinerary --- */
+#generate-schedule {
+    display: block;
+    width: 100%;
+    padding: 15px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: white;
+    background-color: var(--success-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 20px;
+}
+
+#generate-schedule:hover {
+    background-color: #218838;
+}
+
+#generate-schedule:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
+}
+
+
+#itinerary-container ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+#itinerary-container li {
+    background: #f8f9fa;
+    padding: 12px;
+    border-bottom: 1px solid var(--light-gray);
+}
+
+#itinerary-container li:last-child {
+    border-bottom: none;
+}
+
+#itinerary-container h4 {
+    color: #dc3545;
+}
+
+/* --- Notifications --- */
+.notification {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    color: #fff;
+    display: none;
+}
+
+.notification.error {
+    background-color: var(--error-color);
+}
+
+
+/* --- Responsive Design --- */
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+
+    .step {
+        padding: 15px;
+    }
+
+    #schedule-container {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
